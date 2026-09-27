@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pehchaan 2.0 | AI-Powered Forensic Identification Network</title>
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              900: '#0c4a6e',
+              950: '#071f30',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Custom High-Contrast Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#070b14] text-slate-100 flex flex-col min-h-screen selection:bg-sky-500/30 selection:text-sky-200">
+
+  <!-- ========================================================================= -->
+  <!-- TOP NAVIGATION HEADER -->
+  <!-- ========================================================================= -->
+  <header class="sticky top-0 z-50 glass-panel border-b border-slate-700/80 backdrop-blur-2xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- Brand & Emblem -->
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-500 via-indigo-500 to-cyan-400 p-[2px] shadow-lg shadow-sky-500/25">
+          <div class="w-full h-full bg-[#0b1329] rounded-[14px] flex items-center justify-center">
+            <i data-lucide="scan-face" class="w-6 h-6 text-sky-400"></i>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2.5">
+            <span class="font-black text-xl sm:text-2xl tracking-tight text-white">
+              PEHCHAAN <span class="text-xs px-2 py-0.5 rounded-lg bg-sky-500/25 text-sky-300 border border-sky-400/50 font-mono font-bold">2.0</span>
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-300 font-medium">Forensic AI Identification & Reunification Network</p>
+        </div>
+      </div>
+
+      <!-- Center Nav Tabs -->
+      <nav class="hidden lg:flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-700/80 shadow-inner">
+        <button class="nav-tab px-4 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all bg-sky-500 text-slate-950 flex items-center gap-2 shadow-md shadow-sky-500/20" data-tab="dashboard">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+        </button>
+        <button class="nav-tab px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wide transition-all text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-2" data-tab="instant-match">
+          <i data-lucide="scan" class="w-4 h-4"></i> Instant AI Match
+        </button>
+        <button class="nav-tab px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wide transition-all text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-2" data-tab="report-missing">
+          <i data-lucide="user-plus" class="w-4 h-4"></i> Report Missing
+        </button>
+        <button class="nav-tab px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wide transition-all text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-2" data-tab="report-unidentified">
+          <i data-lucide="shield-alert" class="w-4 h-4"></i> Report Unidentified
+        </button>
+        <button class="nav-tab px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wide transition-all text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-2" data-tab="cases">
+          <i data-lucide="folder-kanban" class="w-4 h-4"></i> Case Registry
+        </button>
+        <button class="nav-tab px-4 py-2.5 rounded-xl text-sm font-semibold tracking-wide transition-all text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-2" data-tab="matches">
+          <i data-lucide="git-compare" class="w-4 h-4"></i> Matches
+        </button>
+      </nav>
+
+      <!-- Target API Select & Live Pulse -->
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
+          <span class="text-slate-400 font-mono font-semibold">API:</span>
+          <select id="apiPortSelect" onchange="switchApiPort(this.value)" class="bg-transparent text-white font-mono text-xs focus:outline-none cursor-pointer">
+            <option value="http://localhost:8000" class="bg-slate-900">localhost:8000</option>
+            <option value="http://localhost:8001" class="bg-slate-900">localhost:8001</option>
+          </select>
+        </div>
+
+        <div id="apiStatusBadge" class="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-500/50 shadow-sm">
+          <div id="apiStatusDot" class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
+          <span id="apiStatusText">Connecting...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Nav Bar -->
+    <div class="lg:hidden flex items-center justify-around border-t border-slate-700/80 py-2.5 px-3 bg-[#0a1124] overflow-x-auto text-xs font-semibold">
+      <button class="nav-tab px-3 py-1.5 rounded-lg text-sky-400 font-bold" data-tab="dashboard">Dashboard</button>
+      <button class="nav-tab px-3 py-1.5 rounded-lg text-slate-300" data-tab="instant-match">Instant Match</button>
+      <button class="nav-tab px-3 py-1.5 rounded-lg text-slate-300" data-tab="report-missing">+ Missing</button>
+      <button class="nav-tab px-3 py-1.5 rounded-lg text-slate-300" data-tab="report-unidentified">+ Unidentified</button>
+      <button class="nav-tab px-3 py-1.5 rounded-lg text-slate-300" data-tab="cases">Registry</button>
+      <button class="nav-tab px-3 py-1.5 rounded-lg text-slate-300" data-tab="matches">Matches</button>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN CONTENT CONTAINER -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Live Match Alert Banner -->
+    <div id="recentMatchAlertContainer"></div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: DASHBOARD -->
+    <!-- ========================================================================= -->
+    <section id="tab-dashboard" class="tab-content space-y-8">
+      
+      <!-- Hero Banner -->
+      <div class="relative overflow-hidden rounded-3xl p-8 sm:p-12 border-2 border-slate-700/80 glass-panel shadow-2xl">
+        <div class="absolute -right-20 -top-20 w-96 h-96 bg-sky-500/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-20 -bottom-20 w-96 h-96 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 max-w-3xl space-y-5">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-400/50">
+            <i data-lucide="cpu" class="w-4 h-4 text-sky-400"></i> YuNet & SFace ONNX Biometric Pipeline Active
+          </div>
+          <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+            Bridging Missing Persons & <span class="text-gradient">Unidentified Cases</span>
+          </h1>
+          <p class="text-slate-200 text-base sm:text-lg leading-relaxed font-normal">
+            Pehchaan 2.0 automates identification by pairing 128-dimensional facial biometric embeddings with multi-factor age, gender, height, and NLP physical description correlation.
+          </p>
+
+          <div class="flex flex-wrap gap-4 pt-2">
+            <button onclick="switchTab('instant-match')" class="px-7 py-3.5 rounded-xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-extrabold text-sm tracking-wide uppercase transition-all shadow-lg shadow-sky-500/30 flex items-center gap-2.5">
+              <i data-lucide="scan" class="w-5 h-5"></i> Run Instant Biometric Match
+            </button>
+            <button onclick="switchTab('report-missing')" class="px-7 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm tracking-wide uppercase border border-slate-600 transition-all flex items-center gap-2.5">
+              <i data-lucide="user-plus" class="w-5 h-5 text-indigo-400"></i> Enroll Missing Person
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric Stat Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Card 1 -->
+        <div class="glass-panel p-6 rounded-2xl border-2 border-slate-700/80 hover:border-sky-400/60 transition-all">
+          <div class="flex items-center justify-between">
+            <span class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-300">Total Cases</span>
+            <div class="w-12 h-12 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center border border-sky-500/40">
+              <i data-lucide="folder-archive" class="w-6 h-6"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline gap-2.5">
+            <span id="statTotalCases" class="text-5xl font-black text-white font-mono">0</span>
+            <span class="text-xs sm:text-sm text-slate-300 font-medium">registered in database</span>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="glass-panel p-6 rounded-2xl border-2 border-slate-700/80 hover:border-indigo-400/60 transition-all">
+          <div class="flex items-center justify-between">
+            <span class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-300">Missing Persons</span>
+            <div class="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/40">
+              <i data-lucide="users" class="w-6 h-6"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline gap-2.5">
+            <span id="statMissingPersons" class="text-5xl font-black text-indigo-300 font-mono">0</span>
+            <span class="text-xs sm:text-sm text-slate-300 font-medium">biometrically enrolled</span>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="glass-panel p-6 rounded-2xl border-2 border-slate-700/80 hover:border-rose-400/60 transition-all">
+          <div class="flex items-center justify-between">
+            <span class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-300">Unidentified Cases</span>
+            <div class="w-12 h-12 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center border border-rose-500/40">
+              <i data-lucide="user-x" class="w-6 h-6"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline gap-2.5">
+            <span id="statUnidentifiedBodies" class="text-5xl font-black text-rose-300 font-mono">0</span>
+            <span class="text-xs sm:text-sm text-slate-300 font-medium">awaiting match</span>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="glass-panel p-6 rounded-2xl border-2 border-slate-700/80 hover:border-emerald-400/60 transition-all">
+          <div class="flex items-center justify-between">
+            <span class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-300">Potential AI Matches</span>
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/40">
+              <i data-lucide="check-check" class="w-6 h-6"></i>
+            </div>
+          </div>
+          <div class="mt-4 flex items-baseline gap-2.5">
+            <span id="statPotentialMatches" class="text-5xl font-black text-emerald-400 font-mono">0</span>
+            <span class="text-xs sm:text-sm text-emerald-300 font-semibold">ready for verification</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick Actions & Matches Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left: Quick Action Cards -->
+        <div class="glass-panel p-6 sm:p-7 rounded-2xl border-2 border-slate-700/80 flex flex-col justify-between">
+          <div>
+            <h3 class="text-xl font-extrabold text-white flex items-center gap-2.5">
+              <i data-lucide="zap" class="w-5 h-5 text-amber-400"></i> Fast Actions
+            </h3>
+            <p class="text-sm text-slate-300 mt-1">Intake, scan, and cross-reference cases in seconds.</p>
+          </div>
+
+          <div class="space-y-4 my-6">
+            <div onclick="switchTab('instant-match')" class="p-4 rounded-xl bg-slate-900 border-2 border-slate-700 hover:border-sky-400 cursor-pointer transition-all flex items-center gap-4 group">
+              <div class="w-11 h-11 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center group-hover:bg-sky-400 group-hover:text-slate-950 transition-colors shrink-0">
+                <i data-lucide="scan" class="w-5 h-5"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-bold text-white group-hover:text-sky-300">Instant Biometric Search</h4>
+                <p class="text-xs text-slate-300 truncate">Scan photo against all enrolled missing profiles</p>
+              </div>
+              <i data-lucide="chevron-right" class="w-5 h-5 text-slate-500 group-hover:text-sky-400"></i>
+            </div>
+
+            <div onclick="switchTab('report-missing')" class="p-4 rounded-xl bg-slate-900 border-2 border-slate-700 hover:border-indigo-400 cursor-pointer transition-all flex items-center gap-4 group">
+              <div class="w-11 h-11 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center group-hover:bg-indigo-400 group-hover:text-slate-950 transition-colors shrink-0">
+                <i data-lucide="user-plus" class="w-5 h-5"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-bold text-white group-hover:text-indigo-300">Enroll Missing Person</h4>
+                <p class="text-xs text-slate-300 truncate">Generate 128D AI biometric vector from photo</p>
+              </div>
+              <i data-lucide="chevron-right" class="w-5 h-5 text-slate-500 group-hover:text-indigo-400"></i>
+            </div>
+
+            <div onclick="switchTab('report-unidentified')" class="p-4 rounded-xl bg-slate-900 border-2 border-slate-700 hover:border-rose-400 cursor-pointer transition-all flex items-center gap-4 group">
+              <div class="w-11 h-11 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center group-hover:bg-rose-400 group-hover:text-slate-950 transition-colors shrink-0">
+                <i data-lucide="shield-alert" class="w-5 h-5"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-bold text-white group-hover:text-rose-300">File Unidentified Subject</h4>
+                <p class="text-xs text-slate-300 truncate">Runs automated multi-factor cross-match</p>
+              </div>
+              <i data-lucide="chevron-right" class="w-5 h-5 text-slate-500 group-hover:text-rose-400"></i>
+            </div>
+          </div>
+
+          <div class="text-xs text-slate-400 font-mono bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+            OpenCV SFace Threshold: <strong class="text-sky-400">0.3630 (36.3%)</strong>
+          </div>
+        </div>
+
+        <!-- Right: Recent Matches Table (2 cols) -->
+        <div class="lg:col-span-2 glass-panel p-6 sm:p-7 rounded-2xl border-2 border-slate-700/80 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-xl font-extrabold text-white flex items-center gap-2">
+                  <i data-lucide="activity" class="w-5 h-5 text-emerald-400"></i> Active Forensic Matches
+                </h3>
+                <p class="text-sm text-slate-300">Multi-factor correlations computed by the AI engine.</p>
+              </div>
+              <button onclick="switchTab('matches')" class="text-sm font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1.5">
+                View All Matches <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead>
+                  <tr class="border-b-2 border-slate-700 text-slate-300 uppercase tracking-wider text-xs font-bold">
+                    <th class="py-3 px-4">Missing Person</th>
+                    <th class="py-3 px-4">Unidentified Case</th>
+                    <th class="py-3 px-4">Face Sim</th>
+                    <th class="py-3 px-4">Overall Score</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="matchesTableBody" class="divide-y divide-slate-800">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+
+              <div id="matchesEmptyState" class="py-12 text-center text-slate-400 hidden">
+                <i data-lucide="inbox" class="w-10 h-10 mx-auto text-slate-500 mb-2"></i>
+                <p class="text-sm font-medium">No matches recorded yet. Submit an unidentified case to trigger AI matching.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: INSTANT AI FACE MATCH (BIOMETRIC STUDIO) -->
+    <!-- ========================================================================= -->
+    <section id="tab-instant-match" class="tab-content hidden space-y-8">
+      
+      <div class="max-w-4xl mx-auto space-y-6">
+        
+        <div class="text-center space-y-3">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-400/50">
+            <i data-lucide="scan" class="w-4 h-4 text-sky-400"></i> 1-to-N Biometric Comparison Studio
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">Instant AI Face Recognition</h2>
+          <p class="text-slate-300 text-sm sm:text-base max-w-xl mx-auto font-normal">
+            Upload or capture a face image. The YuNet detector extracts facial landmarks and SFace compares the 128D embedding against all registered missing persons in real-time.
+          </p>
+        </div>
+
+        <!-- Scanner Card -->
+        <div class="glass-panel-glow rounded-3xl p-6 sm:p-8 border-2 border-sky-500/40 shadow-2xl">
+          
+          <!-- Dropzone & Preview Box -->
+          <div id="scannerDropzone" class="relative rounded-2xl border-2 border-dashed border-slate-600 bg-slate-950/80 p-8 flex flex-col items-center justify-center min-h-[360px] text-center transition-all overflow-hidden">
+            
+            <!-- Reticles -->
+            <div class="reticle-corner reticle-top-left"></div>
+            <div class="reticle-corner reticle-top-right"></div>
+            <div class="reticle-corner reticle-bottom-left"></div>
+            <div class="reticle-corner reticle-bottom-right"></div>
+
+            <!-- Scanner Scanline HUD overlay (shown during scanning) -->
+            <div id="scannerHudOverlay" class="absolute inset-0 biometric-scanner-overlay z-20 hidden flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+              <div class="px-5 py-3 rounded-2xl bg-slate-900 border-2 border-sky-400 text-sky-300 font-mono text-sm shadow-2xl flex items-center gap-3">
+                <i data-lucide="loader-2" class="w-5 h-5 animate-spin text-sky-400"></i> Extracting YuNet Landmarks & SFace Vector...
+              </div>
+            </div>
+
+            <!-- Placeholder State -->
+            <div id="scannerPlaceholder" class="space-y-4">
+              <div class="w-20 h-20 rounded-2xl bg-sky-500/20 border-2 border-sky-400/50 text-sky-400 flex items-center justify-center mx-auto shadow-lg shadow-sky-500/20">
+                <i data-lucide="upload-cloud" class="w-10 h-10"></i>
+              </div>
+              <div>
+                <h4 class="text-base sm:text-lg font-bold text-white">Drag & drop photograph here</h4>
+                <p class="text-sm text-slate-300 mt-1">Supports JPG, PNG, and WEBP front-facing portraits</p>
+              </div>
+              <div class="flex items-center justify-center gap-4 pt-3">
+                <label class="px-5 py-2.5 rounded-xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-bold text-xs uppercase tracking-wide cursor-pointer transition-all flex items-center gap-2 shadow-md">
+                  <i data-lucide="file-image" class="w-4 h-4"></i> Browse File
+                  <input id="scannerFileInput" type="file" accept="image/*" class="hidden">
+                </label>
+                <button type="button" id="scannerWebcamBtn" onclick="toggleWebcam()" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs uppercase tracking-wide border border-slate-600 transition-all flex items-center gap-2">
+                  <i data-lucide="camera" class="w-4 h-4 text-emerald-400"></i> Live Camera
+                </button>
+              </div>
+            </div>
+
+            <!-- Live Camera Feed (hidden by default) -->
+            <video id="scannerVideo" autoplay playsinline class="hidden max-h-[320px] rounded-xl object-contain border-2 border-slate-600 shadow-xl"></video>
+            <button id="scannerCaptureBtn" onclick="captureWebcamFrame()" type="button" class="hidden mt-4 px-6 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-extrabold text-sm flex items-center gap-2 shadow-lg shadow-emerald-500/30">
+              <i data-lucide="camera" class="w-5 h-5"></i> Capture Snapshot
+            </button>
+
+            <!-- Image Preview (hidden by default) -->
+            <div id="scannerPreviewContainer" class="hidden relative max-h-[320px] max-w-[320px] rounded-2xl overflow-hidden border-2 border-sky-400 shadow-2xl">
+              <img id="scannerPreviewImg" src="" alt="Subject Preview" class="w-full h-full object-cover">
+              <div class="absolute bottom-2 left-2 right-2 bg-slate-950/90 backdrop-blur-sm py-2 px-3 rounded-xl border border-slate-700 text-xs font-mono font-bold text-sky-300 text-center">
+                Ready for AI Biometric Match
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Action Button -->
+          <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="text-sm text-slate-300 flex items-center gap-2">
+              <i data-lucide="info" class="w-4 h-4 text-sky-400 shrink-0"></i>
+              <span>High-contrast portrait photos yield highest SFace precision.</span>
+            </div>
+            <button id="runScanBtn" onclick="executeBiometricScan()" disabled class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 hover:from-sky-300 hover:to-indigo-400 text-slate-950 font-black text-sm tracking-wider uppercase transition-all shadow-xl shadow-sky-500/30 flex items-center justify-center gap-2.5 opacity-50 cursor-not-allowed">
+              <i data-lucide="scan-eye" class="w-5 h-5"></i> Run AI Biometric Match
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Real-Time AI Results Card -->
+        <div id="scannerResultsContainer" class="hidden glass-panel p-6 sm:p-8 rounded-3xl border-2 border-slate-700 space-y-6">
+          <div class="flex items-center justify-between border-b-2 border-slate-700 pb-4">
+            <div>
+              <h3 class="text-xl font-extrabold text-white flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-5 h-5 text-sky-400"></i> AI Match Analysis Results
+              </h3>
+              <p class="text-sm text-slate-300">Ranked by OpenCV SFace cosine similarity score.</p>
+            </div>
+            <div class="flex gap-5 font-mono text-sm">
+              <div class="text-right">
+                <span class="text-slate-400 block text-xs font-semibold">CANDIDATES CHECKED:</span>
+                <span id="scannerCandidatesChecked" class="text-white font-bold text-base">0 Subjects</span>
+              </div>
+              <div class="text-right">
+                <span class="text-slate-400 block text-xs font-semibold">FACE CONFIDENCE:</span>
+                <span id="scannerFaceConfidence" class="text-emerald-400 font-bold text-base">0%</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="scannerResultsList" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Dynamically populated candidate match cards -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: REPORT MISSING PERSON -->
+    <!-- ========================================================================= -->
+    <section id="tab-report-missing" class="tab-content hidden space-y-8">
+      
+      <div class="max-w-3xl mx-auto space-y-6">
+        <div class="text-center space-y-3">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/50">
+            <i data-lucide="user-plus" class="w-4 h-4 text-indigo-400"></i> Citizen & Law Enforcement Intake
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">Report Missing Person</h2>
+          <p class="text-slate-300 text-sm sm:text-base max-w-lg mx-auto">
+            Log official details and upload clear portrait photographs to generate the subject's 128D face feature vector for cross-case matching.
+          </p>
+        </div>
+
+        <form id="missingPersonForm" class="glass-panel p-6 sm:p-10 rounded-3xl border-2 border-slate-700 space-y-7 shadow-2xl">
+          
+          <!-- Identity Section -->
+          <div>
+            <h4 class="text-sm font-bold uppercase tracking-wider text-sky-400 mb-4 flex items-center gap-2">
+              <i data-lucide="user" class="w-4 h-4"></i> Step 1: Subject Personal Details
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label class="block text-sm font-bold text-slate-100 mb-1.5">Full Legal Name *</label>
+                <input id="mpName" type="text" required placeholder="e.g. Ramesh Kumar" class="w-full px-4 py-3 rounded-xl bg-slate-900 border-2 border-slate-700 text-white text-sm focus:border-sky-400 focus:outline-none">
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-bold text-slate-100 mb-1.5">Age (Years)</label>
+                  <input id="mpAge" type="number" min="0" max="120" placeholder="e.g. 24" class="w-full px-4 py-3 rounded-xl bg-slate-900 border-2 border-slate-700 text-white text-sm focus:border-sky-400 focus:outline-none">
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-slate-100 mb-1.5">Gender</label>
+                  <select id="mpGender" class="w-full px-4 py-3 rounded-xl bg-slate-900 border-2 border-slate-700 text-white text-sm focus:border-sky-400 focus:outline-none">
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-100 mb-1.5">Height (cm)</label>
+                <input id="mpHeight" type="number" step="0.5" placeholder="e.g. 172.5" class="w-full px-4 py-3 rounded-xl bg-slate-900 border-2 border-slate-700 text-white text-sm focus:border-sky-400 focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-100 mb-1.5">Last Seen Date & Time</label>
+                <input id="mpDate" type="datetime-local" class="w-full px-4 py-3 rounded-xl bg-slate-900 border-2 border-slate-700 text-white text-sm focus:border-sky-400 focus:outline-none">
+              </div>
+            </div>
+          </div>
+
+          <!-- Location & Description -->
+          <div class="border-t-2 border-slate-700/80 pt-6">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-indigo-400 mb-4 flex items-center gap-2">
+              <i data-lucide="map-pin" class="w-4 h-4"></i> Step 2: Location & Physical Characteristics
+            </h4>
+            <div class="space-y-5">
+              <div>
+                <label class="block text-sm font-bold text-slate-100 mb-1.5">Last Known Location</label>
+                <input id="mpLocation" type="text" placeholder="e.g. Near Anand Vihar Metro Station, New Delhi" class="w-full px-4 py-3 rounded-xl bg-slate-900 border-2 border-slate-700 text-white text-sm focus:border-sky-400 focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-100 mb-1.5">Physical Description, Marks & Clothing (Analyzed by AI NLP)</label>
+                <textarea id="mpDescription" rows="3" placeholder="e.g. Wearing navy blue jacket and blue jeans. Small scar on left forehead, black spectacles, wheatish complexion." class="w-full px-4 py-3 rounded-xl bg-slate-900 border-2 border-slate-700 text-white text-sm focus:border-sky-400 focus:outline-none"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Photo Upload & Embedding Trigger -->
+          <div class="border-t-2 border-slate-700/80 pt-6">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-4 flex items-center gap-2">
+              <i data-lucide="camera" class="w-4 h-4"></i> Step 3: Face Photo (Generates AI Biometrics)
+            </h4>
+            <div class="relative rounded-2xl border-2 border-dashed border-slate-600 bg-slate-950/70 p-6 flex flex-col items-center justify-center text-center">
+              <img id="missingPersonPhotoPreview" src="" alt="Preview" class="hidden w-32 h-32 object-cover rounded-2xl border-2 border-sky-400 mb-3 shadow-xl">
+              
+              <div id="missingPersonPhotoLabel" class="space-y-2">
+                <i data-lucide="image-plus" class="w-10 h-10 mx-auto text-slate-400"></i>
+                <div class="text-sm text-slate-200 font-bold">Select clear, front-facing portrait photo</div>
+                <p class="text-xs text-slate-400">YuNet detector automatically verifies face presence and image quality</p>
+              </div>
+
+              <label class="mt-4 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-bold uppercase tracking-wider cursor-pointer border border-slate-600 transition-all">
+                Select Photo
+                <input id="missingPersonPhotoInput" type="file" accept="image/*" class="hidden">
+              </label>
+            </div>
+          </div>
+
+          <div class="pt-4">
+            <button id="submitMissingPersonBtn" type="submit" class="w-full py-4 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-extrabold text-sm tracking-wider uppercase transition-all shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2.5">
+              <i data-lucide="check" class="w-5 h-5"></i> Submit Missing Person Report
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: REPORT UNIDENTIFIED CASE -->
+    <!-- ========================================================================= -->
+    <section id="tab-report-unidentified" class="tab-content hidden space-y-8">
+      
+      <div class="max-w-3xl mx-auto space-y-6">
+        <div class="text-center space-y-3">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-400/50">
+            <i data-lucide="shield-alert" class="w-4 h-4 text-rose-400"></i> Law Enforcement & Hospital Intake
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">Report Unidentified Case</h2>
+          <p class="text-slate-300 text-sm sm:text-base max-w-lg mx-auto">
+            Log an unidentified subject or mortal remains. Submitting automatically triggers the multi-factor AI matching pipeline against all active missing person files.
+          </p>
+        </div>
+
+        <form id="unidentifiedForm" class="glass-panel p-6 sm:p-10 rounded-3xl border-2 border-slate-700 space-y-7 shadow-2xl">
+          
+          <!-- Characteristics -->
+          <div>
+            <h4 class="text-sm font-bold uppercase tracking-wider text-rose-400 mb-4 flex items-center gap-2">
+              <i data-lucide="clipboard-list" class="w-4 h-4"></i> Step 1: Estimated Physical Attributes
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div>
+                <label class="block text-sm font-bold text-slate-100 mb-1.5">Estimated Age (Years)</label>
+                <input id="ubAge" type="number" min="0" max="120" placeholder="e.g. 25" class="w-full px-4 py-3 rounded-xl bg-slate-900 border-2 border-slate-700 text-white text-sm focus:border-rose-400 focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-100 mb-1.5">Gender Assessment</label>
+                <select id="ubGender" class="w-full px-4 py-3 rounded-xl bg-slate-900 border-2 border-slate-700 text-white text-sm focus:border-rose-400 focus:outline-none">
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Unknown">Unknown / Indeterminate</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-100 mb-1.5">Estimated Height (cm)</label>
+                <input id="ubHeight" type="number" step="0.5" placeholder="e.g. 170" class="w-full px-4 py-3 rounded-xl bg-slate-900 border-2 border-slate-700 text-white text-sm focus:border-rose-400 focus:outline-none">
+              </div>
+            </div>
+          </div>
+
+          <!-- Location & Description -->
+          <div class="border-t-2 border-slate-700/80 pt-6">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-amber-400 mb-4 flex items-center gap-2">
+              <i data-lucide="map-pin" class="w-4 h-4"></i> Step 2: Found Location & Details
+            </h4>
+            <div class="space-y-5">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label class="block text-sm font-bold text-slate-100 mb-1.5">Location Found</label>
+                  <input id="ubLocation" type="text" placeholder="e.g. Near Yamuna Ghat, Old Railway Bridge" class="w-full px-4 py-3 rounded-xl bg-slate-900 border-2 border-slate-700 text-white text-sm focus:border-rose-400 focus:outline-none">
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-slate-100 mb-1.5">Date & Time Found</label>
+                  <input id="ubDate" type="datetime-local" class="w-full px-4 py-3 rounded-xl bg-slate-900 border-2 border-slate-700 text-white text-sm focus:border-rose-400 focus:outline-none">
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-100 mb-1.5">Physical Description, Clothing & Tattoos</label>
+                <textarea id="ubDescription" rows="3" placeholder="e.g. Blue denim trousers, silver ring on right hand, tattoo on inner wrist." class="w-full px-4 py-3 rounded-xl bg-slate-900 border-2 border-slate-700 text-white text-sm focus:border-rose-400 focus:outline-none"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Photo Upload & Multi-Factor Matching -->
+          <div class="border-t-2 border-slate-700/80 pt-6">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-rose-400 mb-4 flex items-center gap-2">
+              <i data-lucide="camera" class="w-4 h-4"></i> Step 3: Photograph (Triggers Instant Cross-Match)
+            </h4>
+            <div class="relative rounded-2xl border-2 border-dashed border-slate-600 bg-slate-950/70 p-6 flex flex-col items-center justify-center text-center">
+              <img id="unidentifiedPhotoPreview" src="" alt="Preview" class="hidden w-32 h-32 object-cover rounded-2xl border-2 border-rose-400 mb-3 shadow-xl">
+              
+              <div id="unidentifiedPhotoLabel" class="space-y-2">
+                <i data-lucide="image-plus" class="w-10 h-10 mx-auto text-slate-400"></i>
+                <div class="text-sm text-slate-200 font-bold">Select facial portrait or evidence photo</div>
+                <p class="text-xs text-slate-400">Triggers instantaneous multi-factor match against all missing persons</p>
+              </div>
+
+              <label class="mt-4 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-300 text-xs font-bold uppercase tracking-wider cursor-pointer border border-slate-600 transition-all">
+                Select Photo
+                <input id="unidentifiedPhotoInput" type="file" accept="image/*" class="hidden">
+              </label>
+            </div>
+          </div>
+
+          <div class="pt-4">
+            <button id="submitUnidentifiedBtn" type="submit" class="w-full py-4 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-extrabold text-sm tracking-wider uppercase transition-all shadow-xl shadow-rose-500/30 flex items-center justify-center gap-2.5">
+              <i data-lucide="shield-plus" class="w-5 h-5"></i> Submit & Trigger AI Matching
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 5: CASE REGISTRY & GALLERY -->
+    <!-- ========================================================================= -->
+    <section id="tab-cases" class="tab-content hidden space-y-6">
+      
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 class="text-3xl font-black text-white tracking-tight">National Case Registry</h2>
+          <p class="text-sm text-slate-300">Searchable directory of enrolled missing persons and unidentified cases.</p>
+        </div>
+
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <!-- Filter Dropdown -->
+          <select id="registryFilterSelect" class="px-4 py-2.5 rounded-xl bg-slate-900 border-2 border-slate-700 text-sm text-white font-semibold focus:outline-none">
+            <option value="all">All Cases</option>
+            <option value="missing">Missing Persons Only</option>
+            <option value="unidentified">Unidentified Cases Only</option>
+          </select>
+
+          <!-- Search Input -->
+          <div class="relative flex-1 sm:w-72">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+            <input id="registrySearchInput" type="text" placeholder="Search by name, location, case #..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border-2 border-slate-700 text-sm text-white focus:outline-none focus:border-sky-400">
+          </div>
+        </div>
+      </div>
+
+      <!-- Case Grid -->
+      <div id="caseRegistryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- Dynamically populated -->
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 6: MATCH VERIFICATION ROOM -->
+    <!-- ========================================================================= -->
+    <section id="tab-matches" class="tab-content hidden space-y-6">
+      
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-3xl font-black text-white tracking-tight">Match Verification Room</h2>
+          <p class="text-sm text-slate-300">Investigator portal for evaluating and certifying multi-factor AI correlations.</p>
+        </div>
+        <button onclick="refreshAllData()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-bold text-slate-200 border border-slate-600 flex items-center gap-2 transition-all">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh Data
+        </button>
+      </div>
+
+      <div class="glass-panel rounded-3xl border-2 border-slate-700 overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b-2 border-slate-700 bg-slate-950/80 text-slate-300 uppercase tracking-wider text-xs font-bold">
+                <th class="py-4 px-5">Missing Person</th>
+                <th class="py-4 px-5">Unidentified Case</th>
+                <th class="py-4 px-5">Biometric Face Score</th>
+                <th class="py-4 px-5">Attributes Score</th>
+                <th class="py-4 px-5">NLP Text Score</th>
+                <th class="py-4 px-5">Composite Score</th>
+                <th class="py-4 px-5">Status</th>
+                <th class="py-4 px-5 text-right">Investigation</th>
+              </tr>
+            </thead>
+            <tbody id="matchesTableBodyVerification" class="divide-y divide-slate-800">
+              <!-- Reuses table rendering logic -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- FORENSIC MATCH DETAIL MODAL -->
+  <!-- ========================================================================= -->
+  <div id="matchDetailModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+    
+    <div class="glass-panel-glow max-w-3xl w-full rounded-3xl border-2 border-slate-600 overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+      
+      <!-- Modal Header -->
+      <div class="p-6 border-b-2 border-slate-700 flex items-center justify-between bg-slate-900/90">
+        <div class="flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-sky-500/20 text-sky-400 flex items-center justify-center border border-sky-400/50">
+            <i data-lucide="microscope" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-black text-white">Forensic Multi-Factor Match Report</h3>
+            <p class="text-xs sm:text-sm text-slate-300 font-mono">Biometric Gate + Attribute Consistency Analysis</p>
+          </div>
+        </div>
+        <button onclick="closeMatchModal()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-lg font-bold">
+          &times;
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-6 sm:p-8 overflow-y-auto space-y-6 flex-1">
+        
+        <!-- Side-by-side Visual Comparison -->
+        <div class="grid grid-cols-2 gap-5">
+          <!-- Missing Subject -->
+          <div class="p-5 rounded-2xl bg-slate-900 border-2 border-slate-700 space-y-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-400 block">Enrolled Missing Subject</span>
+            <div class="relative h-56 rounded-xl overflow-hidden bg-slate-950 border border-slate-700">
+              <img id="modalPersonPhoto" src="" alt="Missing Person" class="w-full h-full object-cover">
+            </div>
+            <div>
+              <h4 id="modalPersonName" class="font-extrabold text-white text-base">--</h4>
+              <div class="text-sm text-slate-300 mt-1 space-y-0.5">
+                <div>Age: <span id="modalPersonAge" class="text-white font-medium">--</span> • Gender: <span id="modalPersonGender" class="text-white font-medium">--</span></div>
+                <div class="truncate">Last Seen: <span id="modalPersonLocation" class="text-white font-medium">--</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Unidentified Subject -->
+          <div class="p-5 rounded-2xl bg-slate-900 border-2 border-slate-700 space-y-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-rose-400 block">Found Unidentified Subject</span>
+            <div class="relative h-56 rounded-xl overflow-hidden bg-slate-950 border border-slate-700">
+              <img id="modalBodyPhoto" src="" alt="Unidentified Body" class="w-full h-full object-cover">
+            </div>
+            <div>
+              <h4 class="font-extrabold text-white text-base">Unidentified Case Record</h4>
+              <div class="text-sm text-slate-300 mt-1 space-y-0.5">
+                <div>Estimated Age: <span id="modalBodyAge" class="text-white font-medium">--</span></div>
+                <div class="truncate">Found At: <span id="modalBodyLocation" class="text-white font-medium">--</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Multi-Factor Gauges -->
+        <div class="p-6 rounded-2xl bg-slate-900 border-2 border-slate-700 space-y-5">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold uppercase tracking-wider text-slate-300">Multi-Factor Score Weights</span>
+            <div class="flex items-center gap-2">
+              <span class="text-xs sm:text-sm text-slate-400">Classification:</span>
+              <span id="modalOverallBadge" class="px-3 py-1 rounded-full text-xs font-bold badge-potential">POTENTIAL</span>
+            </div>
+          </div>
+
+          <!-- Face Score Bar -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-sm">
+              <span class="text-slate-200 font-medium flex items-center gap-2"><i data-lucide="scan-face" class="w-4 h-4 text-sky-400"></i> Facial Biometric Similarity (SFace 128D)</span>
+              <span id="modalFaceScore" class="font-mono font-bold text-sky-400 text-base">0%</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+              <div id="modalFaceBar" class="bg-sky-400 h-3 rounded-full transition-all duration-700" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Demographic / Attribute Bar -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-sm">
+              <span class="text-slate-200 font-medium flex items-center gap-2"><i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i> Physical Attribute Consistency (Age, Height, Gender)</span>
+              <span id="modalAttrScore" class="font-mono font-bold text-indigo-400 text-base">0%</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+              <div id="modalAttrBar" class="bg-indigo-400 h-3 rounded-full transition-all duration-700" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Description Text NLP Bar -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-sm">
+              <span class="text-slate-200 font-medium flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4 text-purple-400"></i> Physical Description NLP Match</span>
+              <span id="modalTextScore" class="font-mono font-bold text-purple-400 text-base">0%</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+              <div id="modalTextBar" class="bg-purple-400 h-3 rounded-full transition-all duration-700" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Composite Score -->
+          <div class="pt-4 border-t-2 border-slate-700 flex items-center justify-between">
+            <span class="text-base font-extrabold text-white">Overall Composite Match Score:</span>
+            <span id="modalOverallScore" class="text-3xl font-black font-mono text-emerald-400">0%</span>
+          </div>
+        </div>
+
+        <!-- AI Narrative Explanation -->
+        <div class="p-5 rounded-2xl bg-slate-900 border-2 border-slate-700 space-y-2">
+          <span class="text-xs font-bold text-slate-300 uppercase tracking-wider block">AI Forensic Narrative</span>
+          <p id="modalExplanation" class="text-sm text-slate-200 leading-relaxed font-mono">--</p>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer Actions -->
+      <div class="p-5 border-t-2 border-slate-700 flex items-center justify-between bg-slate-900">
+        <button onclick="window.print()" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold flex items-center gap-2 transition-all">
+          <i data-lucide="printer" class="w-4 h-4"></i> Export PDF Report
+        </button>
+        <div class="flex gap-3">
+          <button onclick="showToast('Match flag escalated to lead forensic investigator', 'info'); closeMatchModal();" class="px-5 py-2.5 rounded-xl bg-amber-500/25 hover:bg-amber-500/35 text-amber-300 border border-amber-500/50 text-sm font-bold transition-all">
+            Request DNA Confirmation
+          </button>
+          <button onclick="showToast('Match verified and certified by investigator', 'success'); closeMatchModal();" class="px-6 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-sm font-black transition-all shadow-lg shadow-emerald-500/30">
+            Verify & Confirm Identity
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2.5 pointer-events-none"></div>
+
+  <!-- Main Controller Script -->
+  <script src="app.js"></script>
+</body>
+</html>

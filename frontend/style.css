@@ -1,0 +1,209 @@
+/* Custom Styles & High-Contrast Forensic Theme for Pehchaan 2.0 */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
+
+:root {
+  --primary: #0ea5e9;
+  --primary-bright: #38bdf8;
+  --accent: #10b981;
+  --accent-bright: #34d399;
+  --warning: #f59e0b;
+  --warning-bright: #fbbf24;
+  --danger: #ef4444;
+  --danger-bright: #f87171;
+  --bg-dark: #070b14;
+  --bg-surface: #0f172a;
+  --bg-card: rgba(15, 23, 42, 0.88);
+  --border-subtle: #334155;
+  --border-highlight: #38bdf8;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-dark);
+  color: #f8fafc; /* high contrast white */
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+code, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Glassmorphism with Higher Contrast & Crisp Borders */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6);
+}
+
+.glass-panel-glow {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 0 35px rgba(14, 165, 233, 0.12);
+}
+
+/* High-Contrast Inputs */
+input, select, textarea {
+  color: #ffffff !important;
+  background-color: #0b1329 !important;
+  border-color: #334155 !important;
+  transition: all 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
+  outline: none !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Biometric Scan Line Animation */
+@keyframes scanline {
+  0% {
+    top: 0%;
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0.9;
+  }
+}
+
+.biometric-scanner-overlay {
+  position: relative;
+  overflow: hidden;
+}
+
+.biometric-scanner-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #38bdf8, #818cf8, #38bdf8, transparent);
+  box-shadow: 0 0 20px #38bdf8, 0 0 35px #38bdf8;
+  animation: scanline 2.2s ease-in-out infinite alternate;
+  z-index: 20;
+  pointer-events: none;
+}
+
+/* Radar pulse animation */
+@keyframes radar-pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 16px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.pulse-radar {
+  animation: radar-pulse 2s infinite;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: #070b14;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Corner Reticles for Biometric HUD */
+.reticle-corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: #38bdf8;
+  pointer-events: none;
+}
+
+.reticle-top-left {
+  top: 10px;
+  left: 10px;
+  border-top: 3px solid;
+  border-left: 3px solid;
+}
+
+.reticle-top-right {
+  top: 10px;
+  right: 10px;
+  border-top: 3px solid;
+  border-right: 3px solid;
+}
+
+.reticle-bottom-left {
+  bottom: 10px;
+  left: 10px;
+  border-bottom: 3px solid;
+  border-left: 3px solid;
+}
+
+.reticle-bottom-right {
+  bottom: 10px;
+  right: 10px;
+  border-bottom: 3px solid;
+  border-right: 3px solid;
+}
+
+/* High-Contrast Badges */
+.badge-potential {
+  background: rgba(16, 185, 129, 0.22);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.6);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.25);
+}
+
+.badge-low {
+  background: rgba(148, 163, 184, 0.16);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  font-weight: 600;
+}
+
+.badge-pending {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde047;
+  border: 1px solid rgba(251, 191, 36, 0.6);
+  font-weight: 600;
+}
+
+/* High-Contrast Gradient Texts */
+.text-gradient {
+  background: linear-gradient(135deg, #38bdf8 0%, #a78bfa 50%, #f472b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
