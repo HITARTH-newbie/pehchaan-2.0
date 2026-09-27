@@ -145,31 +145,183 @@ def _calculate_height_score(person_height, body_height):
 
 def _calculate_text_score(person_text, body_text):
     """
-    Lightweight keyword-overlap score for physical descriptions.
-    This is an explainable heuristic, not an identity probability.
+    Explainable physical-description similarity score.
+
+    This is intentionally dependency-free so the Render deployment does not
+    need a large NLP model. It improves the old exact-Jaccard approach by:
+      1. removing common stop words,
+      2. normalizing common forensic-description synonyms,
+      3. matching singular/plural variants,
+      4. allowing close token matches,
+      5. rewarding shared multi-word phrases.
+
+    This is a similarity heuristic, NOT an identity probability.
     """
     if not person_text or not body_text:
         return None
 
     import re
+    from difflib import SequenceMatcher
 
-    def words(text):
-        return {
-            w for w in re.findall(r"[a-zA-Z0-9]+", str(text).lower())
-            if len(w) > 2
-        }
+    STOP_WORDS = {
+        "the", "a", "an", "and", "or", "with", "has", "have", "had",
+        "was", "were", "is", "are", "of", "to", "in", "on", "at",
+        "for", "from", "this", "that", "person", "individual",
+        "approximately", "approx", "around", "about", "years", "year",
+        "old", "aged", "male", "female", "man", "woman", "boy", "girl"
+    }
 
-    a = words(person_text)
-    b = words(body_text)
+    # Common wording differences in missing-person / forensic descriptions.
+    SYNONYMS = {
+        "woman": "female",
+        "girl": "female",
+        "lady": "female",
+        "man": "male",
+        "boy": "male",
+        "gentleman": "male",
 
-    if not a or not b:
+        "dark": "black",
+        "darkhair": "blackhair",
+        "dark-haired": "blackhair",
+        "black-haired": "blackhair",
+        "brown-haired": "brownhair",
+
+        "shirt": "top",
+        "tshirt": "top",
+        "t-shirt": "top",
+        "tee": "top",
+        "jeans": "trousers",
+        "pants": "trousers",
+        "pant": "trousers",
+        "trouser": "trousers",
+
+        "spectacles": "glasses",
+        "eyeglasses": "glasses",
+        "specs": "glasses",
+
+        "beard": "bearded",
+        "moustache": "mustache",
+        "moustached": "mustache",
+
+        "slim": "thin",
+        "slender": "thin",
+        "lean": "thin",
+        "heavyset": "heavy",
+        "stout": "heavy",
+
+        "short": "short",
+        "tall": "tall",
+        "medium": "medium"
+    }
+
+    def normalize_token(token):
+        token = token.lower().strip()
+
+        if token in SYNONYMS:
+            token = SYNONYMS[token]
+
+        # Basic singular/plural normalization.
+        if len(token) > 4:
+            if token.endswith("ies"):
+                token = token[:-3] + "y"
+            elif token.endswith("es") and not token.endswith(("ses", "xes", "zes")):
+                token = token[:-2]
+            elif token.endswith("s") and not token.endswith("ss"):
+                token = token[:-1]
+
+        return token
+
+    def tokenize(text_value):
+        raw = re.findall(r"[a-zA-Z]+(?:-[a-zA-Z]+)?", str(text_value).lower())
+        tokens = []
+
+        for token in raw:
+            token = normalize_token(token)
+
+            if len(token) < 3 or token in STOP_WORDS:
+                continue
+
+            # Re-run synonym normalization after singular/plural handling.
+            token = SYNONYMS.get(token, token)
+            tokens.append(token)
+
+        return tokens
+
+    a_tokens = tokenize(person_text)
+    b_tokens = tokenize(body_text)
+
+    if not a_tokens or not b_tokens:
         return 0.0
 
-    intersection = len(a & b)
-    union = len(a | b)
+    a_set = set(a_tokens)
+    b_set = set(b_tokens)
 
-    return round((intersection / union) * 100, 2) if union else 0.0
+    # Exact canonical overlap.
+    exact_overlap = len(a_set & b_set) / max(len(a_set | b_set), 1)
 
+    # Fuzzy token overlap. A token can match one close token from the other
+    # description, which helps with small wording/spelling differences.
+    def fuzzy_overlap(source, target):
+        if not source or not target:
+            return 0.0
+
+        matched = 0.0
+        used = set()
+
+        for token in source:
+            best_score = 0.0
+            best_index = None
+
+            for index, candidate in enumerate(target):
+                if index in used:
+                    continue
+
+                ratio = SequenceMatcher(
+                    None,
+                    token,
+                    candidate
+                ).ratio()
+
+                if ratio > best_score:
+                    best_score = ratio
+                    best_index = index
+
+            if best_score >= 0.84 and best_index is not None:
+                matched += best_score
+                used.add(best_index)
+
+        return matched / max(len(source), 1)
+
+    fuzzy_ab = fuzzy_overlap(a_tokens, b_tokens)
+    fuzzy_ba = fuzzy_overlap(b_tokens, a_tokens)
+    fuzzy_score = (fuzzy_ab + fuzzy_ba) / 2
+
+    # Reward shared adjacent phrases such as:
+    # "black hair", "white shirt", "young female".
+    def bigrams(tokens):
+        return {
+            f"{tokens[i]} {tokens[i + 1]}"
+            for i in range(len(tokens) - 1)
+        }
+
+    a_bigrams = bigrams(a_tokens)
+    b_bigrams = bigrams(b_tokens)
+
+    phrase_score = (
+        len(a_bigrams & b_bigrams) /
+        max(len(a_bigrams | b_bigrams), 1)
+        if a_bigrams and b_bigrams
+        else 0.0
+    )
+
+    # Weighted, explainable combination.
+    score = (
+        exact_overlap * 0.50 +
+        fuzzy_score * 0.30 +
+        phrase_score * 0.20
+    )
+
+    return round(max(0.0, min(100.0, score * 100)), 2)
 
 def _calculate_overall_score(face_score, attribute_score, text_score):
     """
