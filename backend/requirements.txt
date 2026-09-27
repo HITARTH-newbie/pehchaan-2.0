@@ -2,6 +2,7 @@
 uvicorn[standard]
 sqlalchemy
 psycopg2-binary
+psycopg[binary]
 pydantic-settings
 python-multipart
 opencv-contrib-python-headless
