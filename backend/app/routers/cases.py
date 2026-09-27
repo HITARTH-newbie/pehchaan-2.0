@@ -84,29 +84,248 @@ def get_demo_reporter(db: Session):
 # HELPER — SAVE AI MATCH
 # =========================================================
 
+def _calculate_age_score(person_age, body_age):
+    """Return a heuristic age-consistency score from 0-100."""
+    try:
+        diff = abs(float(person_age) - float(body_age))
+    except (TypeError, ValueError):
+        return None
+
+    if diff <= 1:
+        return 100.0
+    if diff <= 3:
+        return 90.0
+    if diff <= 5:
+        return 75.0
+    if diff <= 10:
+        return 50.0
+    return 20.0
+
+
+def _calculate_gender_score(person_gender, body_gender):
+    """Return a simple normalized gender-consistency score."""
+    if not person_gender or not body_gender:
+        return None
+
+    p = str(person_gender).strip().lower()
+    b = str(body_gender).strip().lower()
+
+    if p == b:
+        return 100.0
+
+    aliases = {
+        "m": "male",
+        "man": "male",
+        "boy": "male",
+        "f": "female",
+        "woman": "female",
+        "girl": "female",
+    }
+
+    return 100.0 if aliases.get(p, p) == aliases.get(b, b) else 0.0
+
+
+def _calculate_height_score(person_height, body_height):
+    """Return a heuristic height-consistency score from 0-100."""
+    try:
+        diff = abs(float(person_height) - float(body_height))
+    except (TypeError, ValueError):
+        return None
+
+    if diff <= 2:
+        return 100.0
+    if diff <= 5:
+        return 90.0
+    if diff <= 8:
+        return 75.0
+    if diff <= 12:
+        return 50.0
+    return 20.0
+
+
+def _calculate_text_score(person_text, body_text):
+    """
+    Lightweight keyword-overlap score for physical descriptions.
+    This is an explainable heuristic, not an identity probability.
+    """
+    if not person_text or not body_text:
+        return None
+
+    import re
+
+    def words(text):
+        return {
+            w for w in re.findall(r"[a-zA-Z0-9]+", str(text).lower())
+            if len(w) > 2
+        }
+
+    a = words(person_text)
+    b = words(body_text)
+
+    if not a or not b:
+        return 0.0
+
+    intersection = len(a & b)
+    union = len(a | b)
+
+    return round((intersection / union) * 100, 2) if union else 0.0
+
+
+def _calculate_overall_score(face_score, attribute_score, text_score):
+    """
+    Weighted multi-factor score.
+
+    Default weights:
+      Face       = 60%
+      Attributes = 25%
+      Text/NLP   = 15%
+
+    If a signal is unavailable, its weight is excluded and the
+    remaining available weights are normalized.
+    """
+    weighted_values = []
+
+    if face_score is not None:
+        weighted_values.append((float(face_score), 0.60))
+
+    if attribute_score is not None:
+        weighted_values.append((float(attribute_score), 0.25))
+
+    if text_score is not None:
+        weighted_values.append((float(text_score), 0.15))
+
+    if not weighted_values:
+        return 0.0
+
+    total_weight = sum(weight for _, weight in weighted_values)
+    score = sum(value * weight for value, weight in weighted_values)
+
+    return round(score / total_weight, 2)
+
+
 def save_match(
     db: Session,
     body: UnidentifiedBody,
     match_data: dict
 ):
-
-    similarity = float(
-        match_data.get("similarity", 0)
-    )
-
+    similarity = float(match_data.get("similarity", 0))
     similarity_percent = float(
         match_data.get("similarity_percent", 0)
     )
 
-    missing_person_id = match_data.get(
-        "missing_person_id"
-    )
+    missing_person_id = match_data.get("missing_person_id")
 
     if not missing_person_id:
         return None
 
     # -----------------------------------------------------
-    # Check whether this body/person pair already exists
+    # GET MISSING PERSON
+    # -----------------------------------------------------
+
+    person = (
+        db.query(MissingPerson)
+        .filter(MissingPerson.id == missing_person_id)
+        .first()
+    )
+
+    if not person:
+        return None
+
+    # -----------------------------------------------------
+    # MULTI-FACTOR SCORING
+    # -----------------------------------------------------
+
+    face_score = round(
+        max(0.0, min(100.0, similarity_percent)),
+        2
+    )
+
+    age_score = _calculate_age_score(
+        person.age,
+        body.estimated_age
+    )
+
+    gender_score = _calculate_gender_score(
+        person.gender,
+        body.gender
+    )
+
+    height_score = _calculate_height_score(
+        person.height_cm,
+        body.estimated_height_cm
+    )
+
+    attribute_values = [
+        score
+        for score in (
+            age_score,
+            gender_score,
+            height_score
+        )
+        if score is not None
+    ]
+
+    attribute_score = (
+        round(
+            sum(attribute_values) / len(attribute_values),
+            2
+        )
+        if attribute_values
+        else None
+    )
+
+    text_score = _calculate_text_score(
+        person.description,
+        body.physical_description
+    )
+
+    overall_score = _calculate_overall_score(
+        face_score=face_score,
+        attribute_score=attribute_score,
+        text_score=text_score
+    )
+
+    # -----------------------------------------------------
+    # CLASSIFICATION
+    # -----------------------------------------------------
+
+    status = classify_similarity(
+        overall_score / 100.0
+    )
+
+    # -----------------------------------------------------
+    # EXPLANATION
+    # -----------------------------------------------------
+
+    explanation = (
+        f"Multi-factor AI analysis found "
+        f"{face_score:.1f}% facial similarity, "
+        f"{attribute_score:.1f}% attribute consistency"
+        if attribute_score is not None
+        else
+        f"Multi-factor AI analysis found "
+        f"{face_score:.1f}% facial similarity, "
+        f"attribute consistency unavailable"
+    )
+
+    if text_score is not None:
+        explanation += (
+            f", and {text_score:.1f}% physical-description "
+            f"similarity."
+        )
+    else:
+        explanation += (
+            ", and physical-description similarity was unavailable."
+        )
+
+    explanation += (
+        f" Composite score: {overall_score:.1f}%. "
+        f"Classification: {status}. "
+        f"Requires investigator verification."
+    )
+
+    # -----------------------------------------------------
+    # CHECK EXISTING MATCH
     # -----------------------------------------------------
 
     existing_match = (
@@ -119,60 +338,31 @@ def save_match(
     )
 
     # -----------------------------------------------------
-    # Determine match status
-    # -----------------------------------------------------
-
-    status = classify_similarity(similarity)
-
-    if status == "POTENTIAL":
-        explanation = (
-            f"AI facial analysis found {similarity_percent}% facial similarity. "
-            f"The result falls within the high-similarity potential-correlation "
-            f"band and requires investigator verification."
-        )
-    elif status == "REVIEW":
-        explanation = (
-            f"AI facial analysis found {similarity_percent}% facial similarity. "
-            f"The result falls within the review band and requires investigator assessment."
-        )
-    else:
-        explanation = (
-            f"AI facial analysis found {similarity_percent}% facial similarity. "
-            f"The result is below the configured review threshold."
-        )
-
-    # -----------------------------------------------------
-    # Update existing match
+    # UPDATE EXISTING MATCH
     # -----------------------------------------------------
 
     if existing_match:
-
-        existing_match.face_score = similarity_percent
-        existing_match.overall_score = similarity_percent
+        existing_match.face_score = face_score
+        existing_match.attribute_score = attribute_score
+        existing_match.text_score = text_score
+        existing_match.overall_score = overall_score
         existing_match.explanation = explanation
         existing_match.status = status
 
         return existing_match
 
     # -----------------------------------------------------
-    # Create new match
+    # CREATE NEW MATCH
     # -----------------------------------------------------
 
     new_match = Match(
         missing_person_id=missing_person_id,
         unidentified_body_id=body.id,
-
-        face_score=similarity_percent,
-
-        # Currently face matching is our available AI signal.
-        # Attribute/text scoring will be added later.
-        attribute_score=None,
-        text_score=None,
-
-        overall_score=similarity_percent,
-
+        face_score=face_score,
+        attribute_score=attribute_score,
+        text_score=text_score,
+        overall_score=overall_score,
         explanation=explanation,
-
         status=status
     )
 
