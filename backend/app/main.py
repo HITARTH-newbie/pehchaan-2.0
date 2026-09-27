@@ -3,6 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, RedirectResponse
+from app.database import Base, engine
+from app import models
 
 from app.routers import cases
 
@@ -12,6 +14,9 @@ app = FastAPI(
     description="AI-powered identification platform",
     version="2.0.0"
 )
+@app.on_event("startup")
+def initialize_database():
+    Base.metadata.create_all(bind=engine)
 
 # Enable CORS for frontend integration
 app.add_middleware(
@@ -52,4 +57,4 @@ def root():
 def health():
     return {
         "status": "healthy"
-    }
+    }
